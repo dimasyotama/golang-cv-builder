@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CV Architect - Surakarta</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --background-color: #f4f7fe;
+            --primary-color: #4a6cf7;
+            --primary-glow: rgba(74, 108, 247, 0.2);
+            --text-primary: #1d2b3a;
+            --text-secondary: #5a6a7b;
+            --border-color: rgba(255, 255, 255, 0.9);
+            --surface-color: rgba(255, 255, 255, 0.6);
+            --ai-bubble-bg: #eef2f9;
+            --font-family: 'Inter', sans-serif;
+            --shadow: 0px 8px 32px rgba(29, 43, 58, 0.1);
+            --border-radius: 16px;
+        }
+
+        /* Base & Layout */
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            background-image: radial-gradient(circle at top left, rgba(74, 108, 247, 0.05), transparent 30%),
+                              radial-gradient(circle at bottom right, rgba(74, 108, 247, 0.05), transparent 30%);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container { display: flex; width: 100%; padding: 24px; gap: 24px; }
+
+        /* Panel Styles */
+        .panel {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 48px);
+            transition: all 0.3s ease;
+        }
+        .chat-panel { flex: 1.2; }
+        .cv-panel { flex: 1; }
+        .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .panel-header svg { color: var(--primary-color); }
+
+        /* Chat Styles */
+        .chat-messages {
+            flex-grow: 1; padding: 24px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .chat-bubble {
+            display: flex; gap: 12px;
+            max-width: 85%; animation: fadeIn 0.4s ease-out forwards;
+        }
+        .chat-bubble .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            background-color: #eef2f9;
+        }
+        .chat-bubble .avatar svg { color: var(--primary-color); }
+        .chat-bubble.user-bubble .avatar { background-color: var(--primary-color); }
+        .chat-bubble.user-bubble .avatar svg { color: white; }
+        .chat-bubble .bubble-content {
+            padding: 14px 20px; border-radius: var(--border-radius); line-height: 1.6;
+        }
+        .ai-bubble { align-self: flex-start; }
+        .ai-bubble .bubble-content { background-color: var(--ai-bubble-bg); border-top-left-radius: 4px; color: var(--text-secondary); }
+        .user-bubble { align-self: flex-end; flex-direction: row-reverse; }
+        .user-bubble .bubble-content { background-color: var(--primary-color); color: white; font-weight: 500; border-top-right-radius: 4px; }
+        
+        /* Chat Input Area */
+        .chat-input-area {
+            display: flex; padding: 16px 24px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            gap: 12px; align-items: flex-end;
+        }
+        #user-input {
+            flex-grow: 1; background-color: #fff; border: 1px solid #e0e5f1;
+            color: var(--text-primary); border-radius: 10px; padding: 14px;
+            font-size: 1rem; font-family: var(--font-family); transition: all 0.3s;
+            resize: none; overflow-y: auto; max-height: 200px; line-height: 1.5;
+        }
+        #user-input:focus {
+            outline: none; border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+        .send-button {
+            background-color: var(--primary-color); color: white; border: none;
+            border-radius: 10px; width: 50px; height: 50px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; flex-shrink: 0;
+        }
+        .send-button:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .send-button svg { width: 24px; height: 24px; }
+        
+        #typing-indicator {
+            display: none; align-items: center; gap: 5px;
+            padding: 0 24px 10px 76px;
+        }
+        #typing-indicator .dot {
+            width: 8px; height: 8px; background-color: #cdd6e4; border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        #typing-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+        #typing-indicator .dot:nth-child(3) { animation-delay: -0.32s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+        /* CV Panel Styles */
+        .cv-preview-content {
+            padding: 24px 30px; flex-grow: 1; overflow-y: auto;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 10.5pt; line-height: 1.5; color: #333;
+        }
+        .cv-preview-content h1 {
+            font-size: 26pt; text-align: center; margin-bottom: 4px;
+            font-weight: 600; color: #000;
+        }
+        .cv-preview-content h1 + p {
+			text-align: center; font-size: 10pt; margin-top: 0;
+            margin-bottom: 20px; color: #222;
+        }
+        .cv-preview-content h2 {
+            font-size: 11pt; font-weight: bold; color: #000;
+            border-bottom: 1.5px solid #000; padding-bottom: 4px;
+            margin-top: 20px; margin-bottom: 12px;
+            text-transform: uppercase; font-family: 'Helvetica', 'Arial', sans-serif;
+        }
+        .cv-preview-content h3 {
+			font-size: 10.5pt; font-weight: bold; color: #111;
+			margin-bottom: 2px; margin-top: 12px;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+        }
+        .cv-preview-content p { margin: 0 0 8px 0; color: #333; }
+        .cv-preview-content ul { padding-left: 18px; margin: 5px 0; list-style-type: '•  '; }
+        .cv-preview-content li { margin-bottom: 6px; padding-left: 4px; }
+        .cv-actions { padding: 20px 24px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .download-button {
+            background-color: var(--primary-color); color: white; width: 100%;
+            padding: 16px; border: none; border-radius: 10px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; display: flex;
+            align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease;
+        }
+        .download-button:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 20px var(--primary-glow);
+        }
+        .download-button svg { width: 20px; height: 20px; }
+        .download-button svg.spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        .skeleton { animation: skeleton-loading 1.5s ease-in-out infinite alternate; }
+        @keyframes skeleton-loading { from { background-color: #eef2f9; } to { background-color: #e1e7f2; } }
+        .skeleton-h1 { width: 60%; height: 40px; margin: 0 auto 20px auto; border-radius: 6px;}
+        .skeleton-h2 { width: 40%; height: 28px; margin-bottom: 24px; border-radius: 6px; }
+        .skeleton-h3 { width: 30%; height: 20px; margin-bottom: 8px; border-radius: 4px; }
+        .skeleton-p { width: 90%; height: 16px; margin-bottom: 16px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-panel panel">
+            <div class="panel-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M140,184a12,12,0,1,1-12-12A12,12,0,0,1,140,184Zm40-12a12,12,0,1,0,12,12A12,12,0,0,0,180,172Zm-88,0a12,12,0,1,0,12,12A12,12,0,0,0,92,172ZM232,72a12,12,0,0,0-12,12V172a12,12,0,0,0,24,0V84A12,12,0,0,0,232,72ZM40,84v88a12,12,0,0,0,24,0V84a12,12,0,0,0-24,0Zm152,96H64a16,16,0,0,0-16,16v24a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8V196A16,16,0,0,0,192,180Z"/></svg>
+                <span>AI CV Architect</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-bubble ai-bubble">
+                    <div class="avatar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M208,88H152a72,72,0,0,0-144,0H48A88.1,88.1,0,0,1,136,0a88.1,88.1,0,0,1,88,88Z"/></svg>
+                    </div>
+                    <div class="bubble-content">
+                        Hi Good to see you again! How can I help?
+                    </div>
+                </div>
+            </div>
+            <div id="typing-indicator">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="user-input" placeholder="Enter message (Enter to send)" rows="1"></textarea>
+                <button class="send-button" onclick="sendMessage()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+                        <path d="M231.8,114.2,56.1,22.6A15.9,15.9,0,0,0,32,36.8V96a8,8,0,0,0,16,0V44.2L213.3,128,48,211.8V160a8,8,0,0,0-16,0v59.2A15.9,15.9,0,0,0,56.1,233.4l175.7-91.6a16,16,0,0,0,0-27.6Z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="cv-panel panel">
+            <div class="panel-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,168H40V56H216V200ZM184,88a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,88Zm0,40a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,128Zm0,40a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,168Z"/></svg>
+                <span>Live Document Preview</span>
+            </div>
+            <div class="cv-preview-content" id="cv-content">
+                <div class="skeleton skeleton-h1"></div>
+                <div class="skeleton skeleton-h2"></div>
+                <div class="skeleton skeleton-h3"></div>
+                <div class="skeleton skeleton-p"></div>
+                <div class="skeleton skeleton-p"></div>
+            </div>
+            <div class="cv-actions">
+                <button class="download-button" onclick="downloadPDF()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="download-icon" width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M213.7,141.7l-80,80A8.2,8.2,0,0,1,128,224a8,8,0,0,1-5.7-2.3l-80-80a8,8,0,1,1,11.4-11.4L120,196.7V40a8,8,0,0,1,16,0V196.7l66.3-66.4a8,8,0,0,1,11.4,11.4Z"/></svg>
+                     <span class="download-text">Download as PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const cvContent = document.getElementById('cv-content');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const downloadButton = document.querySelector('.download-button');
+        let conversationHistory = [];
+
+        // --- JAVASCRIPT LOGIC ---
+
+        // Auto-resize textarea on input
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = (userInput.scrollHeight) + 'px';
+        });
+
+        // Handle key presses in the textarea
+        userInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                if (e.ctrlKey || e.metaKey) {
+                    // Allow newline on Ctrl+Enter or Cmd+Enter
+                    return;
+                } else {
+                    // Send message on single Enter
+                    e.preventDefault(); 
+                    sendMessage();
+                }
+            }
+        });
+        
+        // NEW: Simple markdown parser
+        function parseMarkdown(text) {
+            // Convert **bold** to <strong>bold</strong>
+            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            userInput.value = '';
+            userInput.style.height = 'auto'; 
+            
+            typingIndicator.style.display = 'flex';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message, history: conversationHistory })
+                });
+                
+                typingIndicator.style.display = 'none';
+                if (!response.ok) { throw new Error(`Server error: ${response.status}`); }
+
+                const data = await response.json();
+                addMessage(data.ai_response, 'ai');
+                cvContent.innerHTML = data.cv_html;
+                conversationHistory = data.history;
+
+            } catch (error) {
+                console.error("Error during chat:", error);
+                typingIndicator.style.display = 'none';
+                addMessage("Apologies, I'm having a little trouble connecting. Please try again.", 'ai');
+            }
+        }
+
+        function addMessage(text, type) {
+            const bubbleWrapper = document.createElement('div');
+            bubbleWrapper.classList.add('chat-bubble', `${type}-bubble`);
+            const avatar = document.createElement('div');
+            avatar.classList.add('avatar');
+            if (type === 'ai') {
+                avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M208,88H152a72,72,0,0,0-144,0H48A88.1,88.1,0,0,1,136,0a88.1,88.1,0,0,1,88,88Z"/></svg>`;
+            } else {
+                avatar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M234.3,210A120.8,120.8,0,0,0,144,136.2V113.8a44,44,0,1,0-32,0v22.4A120.8,120.8,0,0,0,21.7,210a12,12,0,1,0,20.6,12A96.8,96.8,0,0,1,112,156.3v-1.1a71.8,71.8,0,0,1,32,0v1.1a96.8,96.8,0,0,1,69.7,65.7a12,12,0,1,0,20.6-12ZM128,88a20,20,0,1,1,20-20A20.1,20.1,0,0,1,128,88Z"/></svg>`;
+            }
+            const bubbleContent = document.createElement('div');
+            bubbleContent.classList.add('bubble-content');
+            // MODIFIED: Use the markdown parser
+            bubbleContent.innerHTML = parseMarkdown(text);
+            bubbleWrapper.appendChild(avatar);
+            bubbleWrapper.appendChild(bubbleContent);
+            chatMessages.appendChild(bubbleWrapper);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        async function downloadPDF() {
+            const cvHTML = cvContent.innerHTML;
+            if (!cvHTML || cvContent.querySelector('.skeleton')) {
+                alert("Please add some information to your CV before downloading.");
+                return;
+            }
+
+            const originalButtonContent = downloadButton.innerHTML;
+            downloadButton.innerHTML = `<svg class="spinning" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M232,128a104,104,0,0,1-208,0c0-41.6,24.2-77.9,59.3-94.2a8,8,0,0,1,8.5,14.3,88.1,88.1,0,1,0,80.4,0,8,8,0,0,1,8.5-14.3C207.8,50.1,232,86.4,232,128Z"/></svg> Generating...`;
+            downloadButton.disabled = true;
+
+            try {
+                const response = await fetch('/download_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ html: cvHTML })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'AI-Architected-CV.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else { 
+                    const errorText = await response.text();
+                    alert(`Failed to generate PDF: ${errorText}`); 
+                }
+            } catch (error) { 
+                console.error("Download error:", error); 
+                alert("An error occurred during download."); 
+            } finally {
+                downloadButton.innerHTML = originalButtonContent;
+                downloadButton.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

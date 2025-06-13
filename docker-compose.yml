@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  cv-builder:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - ./templates:/app/templates
+    restart: unless-stopped 
