@@ -1,57 +1,47 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
-# Install build dependencies
+WORKDIR /app
+
+# Install build-time dependencies
 RUN apk add --no-cache git
 
-# Set working directory
-WORKDIR /app
-
-# Copy go mod and sum files
+# Copy and download Go modules
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy source code
+# Copy the rest of the source code and build
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /cv-builder .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o cv-builder
-
-# Final stage
+# --- Final stage ---
 FROM alpine:latest
 
-# Install Chrome dependencies
+# Install runtime dependencies for headless Chrome
 RUN apk add --no-cache \
     chromium \
-    chromium-chromedriver \
     ttf-freefont \
-    fontconfig \
     dbus \
-    xvfb
+    fontconfig
 
-# Set Chrome binary location
-ENV CHROME_BIN=/usr/bin/chromium-browser
-ENV CHROME_PATH=/usr/lib/chromium/
-
-# Create non-root user
+# Create a non-root user for security
 RUN adduser -D -g '' appuser
 
-# Set working directory
+# Set the working directory for the final container.
+# All subsequent commands (like CMD) will run from here.
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/cv-builder .
+# Copy the compiled binary from the builder stage into the new WORKDIR
+COPY --from=builder /cv-builder .
 
-# Copy templates directory
-COPY --from=builder /app/templates ./templates
+# Copy the templates directory into the new WORKDIR
+COPY --from=builder /app/templates ./templates/
 
-# Use non-root user
+# Switch to the non-root user
 USER appuser
 
-# Expose port
-EXPOSE 8080
+# Expose the application port
+EXPOSE 9090
 
-# Run the application
-CMD ["./cv-builder"] 
+# Since WORKDIR is /app, this command is now equivalent to /app/cv-builder
+CMD ["./cv-builder"]

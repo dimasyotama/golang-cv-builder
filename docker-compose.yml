@@ -4,9 +4,8 @@ services:
   cv-builder:
     build: .
     ports:
-      - "8080:8080"
+      - "9090:9090"
     environment:
+      - PORT=${PORT}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    volumes:
-      - ./templates:/app/templates
-    restart: unless-stopped 
+    restart: unless-stopped

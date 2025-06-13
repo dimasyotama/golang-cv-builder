@@ -150,55 +150,69 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func pdfHandler(w http.ResponseWriter, r *http.Request) {
-    var req PDFRequest
+	var req PDFRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("[ERROR] pdfHandler: Failed to decode request body: %v", err)
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Define the CSS styles to be injected into the HTML for PDF rendering.
 	pdfStyles := `
-	<style>
-		body { 
-			font-family: 'Helvetica', 'Arial', sans-serif; 
-			font-size: 10.5pt; 
-			line-height: 1.5; 
-			color: #333;
-			margin: 30px;
-		}
-		h1 {
-			font-size: 26pt; text-align: center; margin-bottom: 4px;
-			font-weight: 600; color: #000;
-		}
-		/* FIX: This selector now targets any <p> immediately after <h1> */
-		h1 + p {
-			text-align: center; font-size: 10pt; margin-top: 0;
-			margin-bottom: 20px; color: #222;
-		}
-		h2 {
-			font-size: 11pt; font-weight: bold; color: #000;
-			border-bottom: 1.5px solid #000; padding-bottom: 4px;
-			margin-top: 20px; margin-bottom: 12px; text-transform: uppercase;
-		}
-		h3 {
-			font-size: 10.5pt; font-weight: bold; color: #111;
-			margin-bottom: 2px; margin-top: 12px;
-		}
-		p { margin: 0 0 8px 0; color: #333; }
-		ul { padding-left: 18px; margin: 5px 0; list-style-type: '•  ';}
-		li { margin-bottom: 6px; padding-left: 4px; }
-	</style>
-	`
+    <style>
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 10.5pt; 
+            line-height: 1.5; 
+            color: #333;
+            margin: 30px;
+        }
+        h1 {
+            font-size: 26pt; text-align: center; margin-bottom: 4px;
+            font-weight: 600; color: #000;
+        }
+        h1 + p {
+            text-align: center; font-size: 10pt; margin-top: 0;
+            margin-bottom: 20px; color: #222;
+        }
+        h2 {
+            font-size: 11pt; font-weight: bold; color: #000;
+            border-bottom: 1.5px solid #000; padding-bottom: 4px;
+            margin-top: 20px; margin-bottom: 12px; text-transform: uppercase;
+        }
+        h3 {
+            font-size: 10.5pt; font-weight: bold; color: #111;
+            margin-bottom: 2px; margin-top: 12px;
+        }
+        p { margin: 0 0 8px 0; color: #333; }
+        ul { padding-left: 18px; margin: 5px 0; list-style-type: '•  ';}
+        li { margin-bottom: 6px; padding-left: 4px; }
+    </style>
+    `
 
-	ctx, cancel := chromedp.NewContext(context.Background())
+	allocatorCtx, cancel := chromedp.NewExecAllocator(
+		context.Background(),
+		chromedp.NoSandbox,
+		chromedp.Headless,
+		chromedp.DisableGPU,
+		chromedp.ExecPath("/usr/bin/chromium-browser"),
+	)
 	defer cancel()
-	ctx, cancel = context.WithTimeout(ctx, 25*time.Second) 
+
+	ctx, cancel := chromedp.NewContext(allocatorCtx)
+	defer cancel()
+
+	ctx, cancel = context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 
 	var pdfBuffer []byte
 	fullHTML := pdfStyles + req.HTML
-	
+
+	// Run the sequence of browser actions to generate the PDF.
 	err := chromedp.Run(ctx,
+		// Navigate to a blank page to prepare a clean slate.
 		chromedp.Navigate("about:blank"),
+		// Set the document content of the blank page to our full HTML.
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			frameTree, err := page.GetFrameTree().Do(ctx)
 			if err != nil {
@@ -210,8 +224,8 @@ func pdfHandler(w http.ResponseWriter, r *http.Request) {
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			buf, _, err := page.PrintToPDF().
 				WithPrintBackground(false).
-				WithMarginTop(0.4). WithMarginBottom(0.4).
-				WithMarginLeft(0.4). WithMarginRight(0.4).
+				WithMarginTop(0.4).WithMarginBottom(0.4).
+				WithMarginLeft(0.4).WithMarginRight(0.4).
 				Do(ctx)
 			if err != nil {
 				return err
@@ -222,11 +236,12 @@ func pdfHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		log.Printf("Failed to generate PDF with chromedp: %v", err)
-		http.Error(w, "Failed to generate PDF", http.StatusInternalServerError)
+		log.Printf("[FATAL ERROR] pdfHandler: Failed to generate PDF with chromedp: %v", err)
+		http.Error(w, "Failed to generate PDF: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// If successful, set the correct headers and send the PDF data as the response.
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"AI-Architected-CV.pdf\"")
 	w.Write(pdfBuffer)
@@ -243,7 +258,7 @@ func main() {
 	r.HandleFunc("/download_pdf", pdfHandler).Methods("POST")
 	r.Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {http.ServeFile(w, r, "templates/index.html")})
 
-	port := "8000"
+	port := os.Getenv("PORT")
 	log.Printf("✅ Go backend server starting on http://localhost:%s.", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {log.Fatal(err)}
 }
