@@ -14,10 +14,10 @@ A powerful AI-powered CV builder that helps users create professional, ATS-frien
 
 ## Prerequisites
 
-- Go 1.23.0 or higher
+- Go 1.23.0 or higher (for local development)
 - Google Cloud API key for Gemini AI
 - Chrome/Chromium (for PDF generation)
-- Docker and Docker Compose (optional, for containerized deployment)
+- Docker and Docker Compose (for containerized deployment)
 
 ## Installation
 
@@ -39,6 +39,11 @@ go mod download
 GOOGLE_API_KEY=your_api_key_here
 ```
 
+4. (Optional) Set the port (default is 9090):
+```
+PORT=9090
+```
+
 ### Docker Installation
 
 1. Clone the repository:
@@ -47,9 +52,10 @@ git clone https://github.com/yourusername/cv-builder.git
 cd cv-builder
 ```
 
-2. Create a `.env` file with your Google API key:
+2. Create a `.env` file with your Google API key and port:
 ```
 GOOGLE_API_KEY=your_api_key_here
+PORT=9090
 ```
 
 3. Build and run with Docker Compose:
@@ -57,23 +63,22 @@ GOOGLE_API_KEY=your_api_key_here
 docker-compose up --build
 ```
 
+The application will be available at [http://localhost:9090](http://localhost:9090).
+
 ## Usage
 
 ### Local Usage
 
-1. Start the server:
+Start the server:
 ```bash
 go run main.go
 ```
 
-2. The server will start on the default port. You can interact with the API using the following endpoints:
-
-- `POST /chat` - Chat with the AI to build your CV
-- `POST /pdf` - Generate a PDF from your CV HTML
+The server will start on the port specified by the `PORT` environment variable (default: 9090).
 
 ### Docker Usage
 
-The application will be available at `http://localhost:8080` after running `docker-compose up`.
+The application will be available at `http://localhost:9090` after running `docker-compose up`.
 
 ## API Endpoints
 
@@ -102,6 +107,36 @@ Content-Type: application/json
     "html": "Your CV HTML content"
 }
 ```
+
+## Docker & Deployment Notes
+
+- The Go application must listen on the port specified by the `PORT` environment variable (default: 9090).
+- All static files (such as `templates/index.html`) must be present in the Docker image and referenced with the correct relative path (relative to `/app` in the container).
+- If you get a `404 Not Found` at `/`, ensure your Go code includes a handler for `/` that serves `templates/index.html`.
+- Example Go handler for serving the frontend:
+
+```go
+r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    http.ServeFile(w, r, "templates/index.html")
+})
+```
+
+- If you change the port, update both the `.env` file and the `docker-compose.yml` accordingly.
+
+## Troubleshooting
+
+- **404 Not Found at `/` in Docker:**
+  - Make sure your Go code has a handler for `/` that serves the frontend HTML file.
+  - Check that `templates/index.html` exists in the Docker image (`/app/templates/index.html`).
+  - Ensure the Go app is listening on the correct port (`PORT` environment variable).
+  - Check container logs with `docker-compose logs` for errors.
+  - Test inside the container: `docker-compose exec cv-builder sh` then `curl localhost:9090/`.
+
+- **Environment variables not working:**
+  - Ensure `.env` is present and variables are referenced in both Go code and `docker-compose.yml`.
+
+- **Static files not loading:**
+  - Check file paths in your Go code and Docker image.
 
 ## Dependencies
 
