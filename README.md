@@ -26,16 +26,6 @@ A powerful AI-powered CV builder that helps users create professional, ATS-frien
 
 *Real-time chat with AI to build your CV step by step*
 
-### PDF Export
-![PDF Export](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=PDF+Export)
-
-*Professional PDF export with ATS-friendly formatting*
-
-### Docker Deployment
-![Docker Deployment](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Docker+Deployment)
-
-*Easy deployment with Docker and Docker Compose*
-
 ## Prerequisites
 
 - Go 1.23.0 or higher (for local development)
