@@ -2,6 +2,8 @@
 
 A powerful AI-powered CV builder that helps users create professional, ATS-friendly resumes through an interactive chat interface. The application uses Google's Gemini AI to generate and refine CV content, and can export the final result as a professionally formatted PDF.
 
+![CV Builder Screenshot](https://via.placeholder.com/800x400/4a6cf7/ffffff?text=CV+Builder+Screenshot)
+
 ## Features
 
 - 🤖 AI-powered CV generation using Google's Gemini AI
@@ -11,6 +13,28 @@ A powerful AI-powered CV builder that helps users create professional, ATS-frien
 - 📄 PDF export with professional formatting
 - ⚡ Fast and responsive API endpoints
 - 🐳 Docker support for easy deployment
+
+## Screenshots
+
+### Main Interface
+![Main Interface](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Main+Interface)
+
+*Interactive chat interface with AI-powered CV generation*
+
+### Chat Interface
+![Chat Interface](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Chat+Interface)
+
+*Real-time chat with AI to build your CV step by step*
+
+### PDF Export
+![PDF Export](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=PDF+Export)
+
+*Professional PDF export with ATS-friendly formatting*
+
+### Docker Deployment
+![Docker Deployment](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Docker+Deployment)
+
+*Easy deployment with Docker and Docker Compose*
 
 ## Prerequisites
 
