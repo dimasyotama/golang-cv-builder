@@ -2,7 +2,7 @@
 
 A powerful AI-powered CV builder that helps users create professional, ATS-friendly resumes through an interactive chat interface. The application uses Google's Gemini AI to generate and refine CV content, and can export the final result as a professionally formatted PDF.
 
-![CV Builder Screenshot](https://via.placeholder.com/800x400/4a6cf7/ffffff?text=CV+Builder+Screenshot)
+![CV Builder Screenshot](./Screenshot%202025-06-24%20at%2008.28.51.png)
 
 ## Features
 
@@ -17,12 +17,12 @@ A powerful AI-powered CV builder that helps users create professional, ATS-frien
 ## Screenshots
 
 ### Main Interface
-![Main Interface](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Main+Interface)
+![Main Interface](./Screenshot%202025-06-24%20at%2008.28.51.png)
 
 *Interactive chat interface with AI-powered CV generation*
 
 ### Chat Interface
-![Chat Interface](https://via.placeholder.com/600x400/4a6cf7/ffffff?text=Chat+Interface)
+![Chat Interface](./Screenshot%202025-06-24%20at%2008.26.22.png)
 
 *Real-time chat with AI to build your CV step by step*
 
